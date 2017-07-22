@@ -1,0 +1,14 @@
+#TODO - input file to test
+
+#generic input
+Hello
+World
+
+# Comment input
+#! time=1500193725
+
+#Simple phrases
+
+世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/
+你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/
+
