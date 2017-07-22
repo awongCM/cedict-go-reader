@@ -14,7 +14,7 @@ import (
 
 //Our starting AST construct to parse
 type ChineseCEDictReader struct {
-	s *bufio.Scanner
+	*bufio.Scanner
 	TokenType int
 	entry *Entry
 }
@@ -40,13 +40,13 @@ type Entry struct {
 func NewEntry(r io.Reader) []string {
 	bufio_s := bufio.NewScanner(r)
 	e := &ChineseCEDictReader{
-		s: bufio_s,
+		Scanner: bufio_s,
 	}
 
 	var line_input [] string
 
-	for e.s.Scan() {
-		line_input = append(line_input, e.s.Text())
+	for e.Scanner.Scan() {
+		line_input = append(line_input, e.Scanner.Text())
 	}
 
 	return line_input
