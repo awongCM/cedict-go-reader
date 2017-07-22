@@ -17,11 +17,12 @@ type ChineseCEDictReader struct {
 	*bufio.Scanner
 	TokenType int
 	entry *Entry
+	lineInput string 
 }
 
 //Define Tokens
 const (
-	ENTRY = iota
+	DICTENTRY = iota
 	COMMENTENTRY    // #
 	ERRORENTRY  //NIL
 )
@@ -37,33 +38,57 @@ type Entry struct {
 
 //Scanning inputs
 
-func NewEntry(r io.Reader) []string {
+func NewEntry(r io.Reader) *ChineseCEDictReader {
 	bufio_s := bufio.NewScanner(r)
 	e := &ChineseCEDictReader{
 		Scanner: bufio_s,
 	}
 
-	var line_input [] string
+	// var line_input [] string
 
-	for e.Scanner.Scan() {
-		line_input = append(line_input, e.Scanner.Text())
+	// for e.Scanner.Scan() {
+	// 	line_input = append(line_input, e.Scanner.Text())
+	// }
+
+	// return line_input
+
+	splitFunc := func (data [] byte, atEOF bool) (advance int, token []byte, err error) {
+		
+		if len(data) {
+			return			
+		}
+
+		if data[0] == "#" {
+			
+			e.TokenType = COMMENTENTRY
+			e.lineInput = data
+		}
+		else {
+
+			e.TokenType = DICTENTRY
+			e.lineInput = data
+		}
+		return
 	}
 
-	return line_input
+	bufio_s.Split(splitFunc)
+
+	return e
+
 }
 
 func main() {
-	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/\n"
+	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/"
 
 	r := io.Reader(strings.NewReader(input))
 	
-	// startingEntry := NewEntry(r)
+	startingEntry := NewEntry(r)
 
-	// fmt.Println("startingEntry: %s", startingEntry)
+	fmt.Println("startingEntry: %s", startingEntry.lineInput)
 
-	lineInputs := NewEntry(r)
+	// lineInputs := NewEntry(r)
 
-	for index, element := range lineInputs {
-		fmt.Println("Each line input: [%d] index is [%s]", index, element)
-	}
+	// for index, element := range lineInputs {
+	// 	fmt.Println("Each line input: [%d] index is [%s]", index, element)
+	// }
 }
