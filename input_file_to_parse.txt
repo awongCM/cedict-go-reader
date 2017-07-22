@@ -1,8 +1,8 @@
 #TODO - input file to test
 
 #generic input
-Hello
-World
+#Hello
+#World
 
 # Comment input
 #! time=1500193725
@@ -11,4 +11,5 @@ World
 
 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/
 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/
-
+合計 合计 [he2 ji4] /to add up the total/to figure what sth amounts to/to consider/
+合轍兒 合辙儿 [he2 zhe2 r5] /erhua variant of 合轍|合辙[he2 zhe2]/

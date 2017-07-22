@@ -1,6 +1,6 @@
 // Credits - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
 
-package main
+package cedict-go-reader
 
 //Go libraries to import
 import (
@@ -14,15 +14,20 @@ import (
 
 //Data structures defined
 
-type ChineseCEDict struct {
+//Our starting AST construct to parse
+type ChineseCEDictReader struct {
 	*bufio.Scanner
 	TokenType int
 	entry *Entry
 }
 
+//Define Tokens
 const (
-	EntryToken = iota
-	CommentToken
+	ENTRY = iota
+	COMMENTENTRY    // #
+
+	SQUAREBRACKETS // [] 
+	FORWARDSLASH // \
 )
 
 type Entry struct {
