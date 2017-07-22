@@ -39,56 +39,47 @@ type Entry struct {
 //Scanning inputs
 
 func NewEntry(r io.Reader) *ChineseCEDictReader {
-	bufio_s := bufio.NewScanner(r)
+	s := bufio.NewScanner(r)
 	e := &ChineseCEDictReader{
-		Scanner: bufio_s,
+		Scanner: s,
 	}
 
-	// var line_input [] string
-
-	// for e.Scanner.Scan() {
-	// 	line_input = append(line_input, e.Scanner.Text())
-	// }
-
-	// return line_input
-
-	splitFunc := func (data [] byte, atEOF bool) (advance int, token []byte, err error) {
-		
-		if len(data) {
+	splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if len(data) == 0 {		
 			return			
 		}
 
-		if data[0] == "#" {
-			
+		if data[0] == '#' {
 			e.TokenType = COMMENTENTRY
-			e.lineInput = data
-		}
-		else {
-
+			advance, token, err = bufio.ScanWords(data, atEOF)
+			fmt.Println("debugger comment ", string(data))		
+			e.lineInput = string(data)
+		} else {
 			e.TokenType = DICTENTRY
-			e.lineInput = data
+			advance, token, err = bufio.ScanWords(data, atEOF)
+			fmt.Println("debugger dict", string(data))
+			e.lineInput = string(data)
 		}
 		return
+
 	}
 
-	bufio_s.Split(splitFunc)
-
+	s.Split(splitFunc)
 	return e
 
 }
 
+
+
 func main() {
-	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/"
+	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ hello world"
 
 	r := io.Reader(strings.NewReader(input))
 	
 	startingEntry := NewEntry(r)
 
-	fmt.Println("startingEntry: %s", startingEntry.lineInput)
+	
+	startingEntry.Scan();
+	fmt.Println("lineinput", startingEntry.lineInput);
 
-	// lineInputs := NewEntry(r)
-
-	// for index, element := range lineInputs {
-	// 	fmt.Println("Each line input: [%d] index is [%s]", index, element)
-	// }
 }
