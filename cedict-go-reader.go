@@ -1,13 +1,11 @@
 // Credits - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
 
-package cedict-go-reader
+package main
 
 //Go libraries to import
 import (
 	"bufio"
 	"fmt"
-	"os"
-	"log"
 	"strings"
 	"io"
 )
@@ -16,7 +14,7 @@ import (
 
 //Our starting AST construct to parse
 type ChineseCEDictReader struct {
-	*bufio.Scanner
+	s *bufio.Scanner
 	TokenType int
 	entry *Entry
 }
@@ -25,9 +23,7 @@ type ChineseCEDictReader struct {
 const (
 	ENTRY = iota
 	COMMENTENTRY    // #
-
-	SQUAREBRACKETS // [] 
-	FORWARDSLASH // \
+	ERRORENTRY  //NIL
 )
 
 type Entry struct {
@@ -39,27 +35,35 @@ type Entry struct {
 	Definitions [] string
 }
 
+//Scanning inputs
+
+func NewEntry(r io.Reader) []string {
+	bufio_s := bufio.NewScanner(r)
+	e := &ChineseCEDictReader{
+		s: bufio_s,
+	}
+
+	var line_input [] string
+
+	for e.s.Scan() {
+		line_input = append(line_input, e.s.Text())
+	}
+
+	return line_input
+}
+
 func main() {
-	//Todo
+	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/\n"
 
-	// const input = "1,2,3,4,"
-	// scanner := bufio.NewScanner(strings.NewReader(input))
+	r := io.Reader(strings.NewReader(input))
+	
+	// startingEntry := NewEntry(r)
 
-	// onComma := func(data []byte, atEOF bool) (advance int, token []byte, err error){
-	// 	for i := 0; i < len(data); i++ {
-	// 		if data[i] == ',' {
-	// 			return i + 1, data[:1], nil
-	// 		}
-	// 	}
+	// fmt.Println("startingEntry: %s", startingEntry)
 
-	// 	return 0, data, bufio.ErrFinalToken
-	// }
-	// scanner.Split(onComma)
-	// for scanner.Scan() {
-	// 	fmt.Printf("%q ", scanner.Text())
-	// }
-	// if err := scanner.Err(); err != nil {
-	// 	fmt.Fprintln(os.Stderr, "reading input:", err)
-	// 	log.Fatal(err)
-	// }
+	lineInputs := NewEntry(r)
+
+	for index, element := range lineInputs {
+		fmt.Println("Each line input: [%d] index is [%s]", index, element)
+	}
 }
