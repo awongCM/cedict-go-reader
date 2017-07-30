@@ -1,4 +1,4 @@
-// Credits - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
+// Credits goes - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
 
 package main
 
@@ -246,13 +246,13 @@ func main() {
 	for startingEntry.Scan() {
 
 		if startingEntry.TokenType == DICT_ENTRY  {
-			fmt.Println("dict entry found", startingEntry.lineInput)
-
+			
 			e, err := parseEntry(startingEntry.lineInput)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "cannot parse entry", err)
 			}
 			startingEntry.entry = e
+			fmt.Println("Dict Entry: ", startingEntry.entry.Simplified, startingEntry.entry.Definitions[0] )
 
 		} else if startingEntry.TokenType == COMMENT_ENTRY{
 			fmt.Println("comment entry found", startingEntry.lineInput)
