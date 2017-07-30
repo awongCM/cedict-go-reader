@@ -9,6 +9,7 @@ import (
 	"strings"
 	"io"
 	"os"
+	"regexp"
 )
 
 //Data structures defined
@@ -104,20 +105,56 @@ func processDictEntry(data []byte, atEOF bool) (int, []byte, error) {
 	return 0, nil, nil
 }
 
+var regExEntry = regexp.MustCompile(`(?P<trad>\S*?) (?P<simp>\S*?) \[(?P<pinyin>.+)\] \/(?P<defs>.+)\/`)
+
+func parseEntry(s string) (*Entry, error) {
+	match := regExEntry.FindStringSubmatch(s)
+
+	if match == nil {
+		return nil, fmt.Errorf("Format Error for entry: %v", s)
+	}
+
+	e := Entry{}
+
+	for i, repattern := range regExEntry.SubexpNames()  {
+		if i == 0 || repattern == "" {
+			continue
+		}
+
+		switch repattern {
+		case "trad":
+			e.Simplified = match[i]
+		case "simp":
+			e.Traditional = match[i]
+		case "pinyin":
+			e.Pinyin = match[i]
+		case "defs":
+			e.Definitions = strings.Split(match[i], "/")
+		}
+	}
+
+	return &e, nil
+}
 
 
 func main() {
-	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ hello world \n"
+	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n"
 
 	r := io.Reader(strings.NewReader(input))
 	
 	startingEntry := NewEntry(r)
 
-
 	for startingEntry.Scan() {
 
 		if startingEntry.TokenType == DICT_ENTRY  {
 			fmt.Println("dict entry found", startingEntry.lineInput)
+
+			e, err := parseEntry(startingEntry.lineInput)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "cannot parse entry", err)
+			}
+			startingEntry.entry = e
+
 		} else if startingEntry.TokenType == COMMENT_ENTRY{
 			fmt.Println("comment entry found", startingEntry.lineInput)
 		}
