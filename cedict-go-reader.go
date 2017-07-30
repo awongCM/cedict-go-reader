@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"bytes"
 )
 
 //Data structures defined
@@ -105,6 +106,36 @@ func processDictEntry(data []byte, atEOF bool) (int, []byte, error) {
 	return 0, nil, nil
 }
 
+func extractPinyinWithTones(p string) string {
+	pv := strings.Replace(p, "u:", "ü", -1)
+	py := strings.Split(pv, " ")
+
+	var output bytes.Buffer
+	for _, pySyllable := range py {
+		pyNoTone, tone := extractTone(pySyllable)
+		pyWithTone, err := replaceWithToneMark(pyNoTone, tone)
+		if err != nil {
+			output.WriteString(pySyllable)
+		} else {
+			output.WriteString(pyWithTone)
+		}
+	}
+	return output.String()
+
+}
+
+func extractPinyinWithoutTones(p string) string{
+	pv := strings.Replace(p, "u:", "ü", -1)
+	py := strings.Split(pv, " ")
+
+	var output bytes.Buffer
+	for _, pySyllable := range py {
+		pyNoTone, tone := extractTone(pySyllable)
+		output.WriteString(pyNoTone)
+	}
+	return output.String()
+}
+
 var regExEntry = regexp.MustCompile(`(?P<trad>\S*?) (?P<simp>\S*?) \[(?P<pinyin>.+)\] \/(?P<defs>.+)\/`)
 
 func parseEntry(s string) (*Entry, error) {
@@ -132,6 +163,9 @@ func parseEntry(s string) (*Entry, error) {
 			e.Definitions = strings.Split(match[i], "/")
 		}
 	}
+
+	e.PinyinWithTones = extractPinyinWithTones(e.Pinyin)
+	e.PinyinNoTones = extractPinyinWithoutTones(e.Pinyin)
 
 	return &e, nil
 }
