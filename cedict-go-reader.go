@@ -124,16 +124,81 @@ func extractPinyinWithTones(p string) string {
 
 }
 
-func extractPinyinWithoutTones(p string) string{
-	pv := strings.Replace(p, "u:", "ü", -1)
+func extractPinyinWithoutTones(p string) string {
+	pv := strings.Replace(p, "u:", "v", -1)
 	py := strings.Split(pv, " ")
 
 	var output bytes.Buffer
 	for _, pySyllable := range py {
-		pyNoTone, tone := extractTone(pySyllable)
+		pyNoTone, _ := extractTone(pySyllable)
 		output.WriteString(pyNoTone)
 	}
 	return output.String()
+}
+
+func extractTone(p string) (string ,int){
+	tone := int(p[len(p)-1]) - 48
+
+	if tone > 5 || tone < 0 {
+		return p, 0
+	}
+
+	return p[0: len(p)-1], tone
+}
+
+func replaceWithToneMark(s string, tone int) (string, error) {
+	lookup, err :=toneLookUpTable(tone)
+
+	if err != nil {
+		return "", err
+	}
+
+	if strings.Contains(s, "a") {
+		return strings.Replace(s, "a", lookup["a"], -1), nil
+	}
+
+	if strings.Contains(s, "e") {
+		return strings.Replace(s, "e", lookup["e"], -1), nil
+	}
+
+	if strings.Contains(s, "ou") {
+		return strings.Replace(s, "o", lookup["o"], -1), nil
+	}
+	index := strings.LastIndexAny(s, "iüou")
+
+	if index != -1 {
+		var output bytes.Buffer
+		for i, runeVal := range s {
+			if i == index {
+				output.WriteString(lookup[string(runeVal)])
+			} else {
+				output.WriteString(string(runeVal))
+			}
+		}
+		return output.String(), nil
+	}
+
+	return "", fmt.Errorf("No tone match")
+
+}
+
+func toneLookUpTable(tone int) (map[string]string, error) {
+
+	if tone < 0 || tone > 5 {
+		return nil, fmt.Errorf("Tried to create tone lookup table with tone %i", tone)
+	}
+
+	lookupTable := map[string][]string{
+
+	}
+
+	toneLookup := make(map[string]string)
+
+	for vowel, toneRunes:= range lookupTable {
+		toneLookup[vowel] = toneRunes[tone]
+	}
+
+	return toneLookup, nil
 }
 
 var regExEntry = regexp.MustCompile(`(?P<trad>\S*?) (?P<simp>\S*?) \[(?P<pinyin>.+)\] \/(?P<defs>.+)\/`)
