@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 	"io"
-	"os"
 	"regexp"
 	"bytes"
+	"errors"
 )
 
 //Data structures defined
@@ -68,6 +68,25 @@ func NewEntry(r io.Reader) *ChineseCEDictReader {
 	s.Split(splitFunc)
 	return e
 
+}
+
+func (cedict_r *ChineseCEDictReader) IterateEntry() error {
+	for cedict_r.Scan() {
+		if cedict_r.TokenType == DICT_ENTRY {
+			e, err := parseEntry(cedict_r.lineInput)
+			if err != nil {
+				return err
+			}
+			cedict_r.entry = e
+			return nil
+		}
+	}
+
+	if err := cedict_r.Err(); err != nil {
+		return err
+	}
+
+	return errors.New("No more entries to read")
 }
 
 //returns a pointer to the recently parsed Entry struct
@@ -242,34 +261,21 @@ func parseEntry(s string) (*Entry, error) {
 
 
 func main() {
-	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n"
+	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/"
 
 	r := io.Reader(strings.NewReader(input))
 	
 	cedict_r := NewEntry(r)
 
-	for cedict_r.Scan() {
+	for {
+		err := cedict_r.IterateEntry()
 
-		if cedict_r.TokenType == DICT_ENTRY  {
-			
-			e, err := parseEntry(cedict_r.lineInput)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "cannot parse entry", err)
-			}
-			cedict_r.entry = e
-
-			current_entry := cedict_r.Entry()
-			fmt.Println("Dict Entry: ", current_entry.Simplified, current_entry.Definitions[0] )
-
-		} else if cedict_r.TokenType == COMMENT_ENTRY{
-			fmt.Println("comment entry found", cedict_r.lineInput)
+		if err != nil {
+			break
 		}
 
-		if err := cedict_r.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "reading standard input:", err)
-		}
-
-		
-	}	
+		current_entry := cedict_r.Entry()
+		fmt.Println("Dict Entry: ", current_entry.Simplified, current_entry.PinyinWithTones, current_entry.Definitions[0])
+	}
 
 }
