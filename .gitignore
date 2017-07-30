@@ -2,4 +2,4 @@
 cedict_ts.u8
 
 #exclude the following
-*/*.exe
+*.exe
