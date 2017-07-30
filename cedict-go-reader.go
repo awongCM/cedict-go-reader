@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"io"
+	"os"
 )
 
 //Data structures defined
@@ -20,11 +21,11 @@ type ChineseCEDictReader struct {
 	lineInput string 
 }
 
-//Define Tokens
+//Define line tokens
 const (
-	DICTENTRY = iota
-	COMMENTENTRY    // #
-	ERRORENTRY  //NIL
+	DICT_ENTRY = iota
+	COMMENT_ENTRY    // #
+	ERR_ENTRY  //NIL
 )
 
 type Entry struct {
@@ -50,18 +51,16 @@ func NewEntry(r io.Reader) *ChineseCEDictReader {
 		}
 
 		if data[0] == '#' {
-			e.TokenType = COMMENTENTRY
-			advance, token, err = bufio.ScanWords(data, atEOF)
-			fmt.Println("debugger comment ", string(data))		
-			e.lineInput = string(data)
+			e.TokenType = COMMENT_ENTRY
+			advance, token, err = processCommentEntry(data, atEOF)
+			e.lineInput = string(token)
+			
 		} else {
-			e.TokenType = DICTENTRY
-			advance, token, err = bufio.ScanWords(data, atEOF)
-			fmt.Println("debugger dict", string(data))
-			e.lineInput = string(data)
+			e.TokenType = DICT_ENTRY
+			advance, token, err = processDictEntry(data, atEOF)
+			e.lineInput = string(token)
 		}
 		return
-
 	}
 
 	s.Split(splitFunc)
@@ -69,17 +68,65 @@ func NewEntry(r io.Reader) *ChineseCEDictReader {
 
 }
 
+func processCommentEntry(data []byte, atEOF bool) (int, []byte, error){
+	var tokens []byte
+
+	for i, b := range data {
+		if b =='\n' || (atEOF && i == len(data) - 1){
+			return i + 1, tokens, nil
+		} else {
+			tokens = append(tokens, b)
+		}
+	}
+
+	if atEOF {
+		return len(data), tokens, nil
+	}
+
+	return 0, nil, nil
+}
+
+func processDictEntry(data []byte, atEOF bool) (int, []byte, error) {
+	var tokens []byte
+
+	for i, b:= range data {
+		if b == '\n' {
+			return i + 1, tokens, nil
+		} else {
+			tokens = append(tokens, b)
+		}
+	}
+
+	if atEOF {
+		return len(data), tokens, nil
+	}
+
+	return 0, nil, nil
+}
+
 
 
 func main() {
-	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ hello world"
+	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ hello world \n"
 
 	r := io.Reader(strings.NewReader(input))
 	
 	startingEntry := NewEntry(r)
 
-	
-	startingEntry.Scan();
-	fmt.Println("lineinput", startingEntry.lineInput);
+
+	for startingEntry.Scan() {
+
+		if startingEntry.TokenType == DICT_ENTRY  {
+			fmt.Println("dict entry found", startingEntry.lineInput)
+		} else if startingEntry.TokenType == COMMENT_ENTRY{
+			fmt.Println("comment entry found", startingEntry.lineInput)
+		}
+
+		if err := startingEntry.Err(); err != nil {
+			fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		}
+
+		
+	}	
 
 }

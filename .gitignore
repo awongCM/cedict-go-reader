@@ -1,2 +1,5 @@
 #ignore the dictionary file for now.
 cedict_ts.u8
+
+#exclude the following
+*/*.exe
