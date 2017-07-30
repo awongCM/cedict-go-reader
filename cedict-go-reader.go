@@ -70,6 +70,11 @@ func NewEntry(r io.Reader) *ChineseCEDictReader {
 
 }
 
+//returns a pointer to the recently parsed Entry struct
+func (cedict_r *ChineseCEDictReader) Entry() *Entry{
+	return cedict_r.entry
+}
+
 func processCommentEntry(data []byte, atEOF bool) (int, []byte, error){
 	var tokens []byte
 
@@ -241,24 +246,26 @@ func main() {
 
 	r := io.Reader(strings.NewReader(input))
 	
-	startingEntry := NewEntry(r)
+	cedict_r := NewEntry(r)
 
-	for startingEntry.Scan() {
+	for cedict_r.Scan() {
 
-		if startingEntry.TokenType == DICT_ENTRY  {
+		if cedict_r.TokenType == DICT_ENTRY  {
 			
-			e, err := parseEntry(startingEntry.lineInput)
+			e, err := parseEntry(cedict_r.lineInput)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "cannot parse entry", err)
 			}
-			startingEntry.entry = e
-			fmt.Println("Dict Entry: ", startingEntry.entry.Simplified, startingEntry.entry.Definitions[0] )
+			cedict_r.entry = e
 
-		} else if startingEntry.TokenType == COMMENT_ENTRY{
-			fmt.Println("comment entry found", startingEntry.lineInput)
+			current_entry := cedict_r.Entry()
+			fmt.Println("Dict Entry: ", current_entry.Simplified, current_entry.Definitions[0] )
+
+		} else if cedict_r.TokenType == COMMENT_ENTRY{
+			fmt.Println("comment entry found", cedict_r.lineInput)
 		}
 
-		if err := startingEntry.Err(); err != nil {
+		if err := cedict_r.Err(); err != nil {
 			fmt.Fprintln(os.Stderr, "reading standard input:", err)
 		}
 
