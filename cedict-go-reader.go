@@ -1,4 +1,4 @@
-// Credits goes - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
+// Credits goes to this - https://blog.gopheracademy.com/advent-2014/parsers-lexers/
 
 package main
 
@@ -261,7 +261,7 @@ func parseEntry(s string) (*Entry, error) {
 
 
 func main() {
-	input := "# Comment \n 世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/ \n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/"
+	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/\n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/\n"
 
 	r := io.Reader(strings.NewReader(input))
 	
