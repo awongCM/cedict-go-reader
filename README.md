@@ -1,4 +1,5 @@
-##Chinese-English Dictionary Tokenizer/Parser Program Golang
+
+# Chinese-English Dictionary Tokenizer/Parser Program Golang
 
 My very first own tokenizer/parser program writing in Go
 
