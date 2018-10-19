@@ -5,12 +5,14 @@ package main
 //Go libraries to import
 import (
 	"bufio"
-	"fmt"
-	"strings"
-	"io"
-	"regexp"
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"regexp"
+	"strings"
 )
 
 //Data structures defined
@@ -19,24 +21,24 @@ import (
 type ChineseCEDictReader struct {
 	*bufio.Scanner
 	TokenType int
-	entry *Entry
-	lineInput string 
+	entry     *Entry
+	lineInput string
 }
 
 //Define line tokens
 const (
-	DICT_ENTRY = iota
-	COMMENT_ENTRY    // #
-	ERR_ENTRY  //NIL
+	DICT_ENTRY    = iota
+	COMMENT_ENTRY // #
+	ERR_ENTRY     //NIL
 )
 
 type Entry struct {
-	Simplified string	
-	Traditional string	
-	Pinyin string	
-	PinyinWithTones string	
-	PinyinNoTones string	
-	Definitions [] string
+	Simplified      string
+	Traditional     string
+	Pinyin          string
+	PinyinWithTones string
+	PinyinNoTones   string
+	Definitions     []string
 }
 
 //Scanning inputs
@@ -48,15 +50,15 @@ func NewEntry(r io.Reader) *ChineseCEDictReader {
 	}
 
 	splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if len(data) == 0 {		
-			return			
+		if len(data) == 0 {
+			return
 		}
 
 		if data[0] == '#' {
 			e.TokenType = COMMENT_ENTRY
 			advance, token, err = processCommentEntry(data, atEOF)
 			e.lineInput = string(token)
-			
+
 		} else {
 			e.TokenType = DICT_ENTRY
 			advance, token, err = processDictEntry(data, atEOF)
@@ -90,15 +92,15 @@ func (cedict_r *ChineseCEDictReader) IterateEntry() error {
 }
 
 //returns a pointer to the recently parsed Entry struct
-func (cedict_r *ChineseCEDictReader) Entry() *Entry{
+func (cedict_r *ChineseCEDictReader) Entry() *Entry {
 	return cedict_r.entry
 }
 
-func processCommentEntry(data []byte, atEOF bool) (int, []byte, error){
+func processCommentEntry(data []byte, atEOF bool) (int, []byte, error) {
 	var tokens []byte
 
 	for i, b := range data {
-		if b =='\n' || (atEOF && i == len(data) - 1){
+		if b == '\n' || (atEOF && i == len(data)-1) {
 			return i + 1, tokens, nil
 		} else {
 			tokens = append(tokens, b)
@@ -115,7 +117,7 @@ func processCommentEntry(data []byte, atEOF bool) (int, []byte, error){
 func processDictEntry(data []byte, atEOF bool) (int, []byte, error) {
 	var tokens []byte
 
-	for i, b:= range data {
+	for i, b := range data {
 		if b == '\n' {
 			return i + 1, tokens, nil
 		} else {
@@ -160,18 +162,18 @@ func extractPinyinWithoutTones(p string) string {
 	return output.String()
 }
 
-func extractTone(p string) (string ,int){
+func extractTone(p string) (string, int) {
 	tone := int(p[len(p)-1]) - 48
 
 	if tone > 5 || tone < 0 {
 		return p, 0
 	}
 
-	return p[0: len(p)-1], tone
+	return p[0 : len(p)-1], tone
 }
 
 func replaceWithToneMark(s string, tone int) (string, error) {
-	lookup, err :=toneLookUpTable(tone)
+	lookup, err := toneLookUpTable(tone)
 
 	if err != nil {
 		return "", err
@@ -212,13 +214,11 @@ func toneLookUpTable(tone int) (map[string]string, error) {
 		return nil, fmt.Errorf("Tried to create tone lookup table with tone %i", tone)
 	}
 
-	lookupTable := map[string][]string{
-
-	}
+	lookupTable := map[string][]string{}
 
 	toneLookup := make(map[string]string)
 
-	for vowel, toneRunes:= range lookupTable {
+	for vowel, toneRunes := range lookupTable {
 		toneLookup[vowel] = toneRunes[tone]
 	}
 
@@ -236,7 +236,7 @@ func parseEntry(s string) (*Entry, error) {
 
 	e := Entry{}
 
-	for i, repattern := range regExEntry.SubexpNames()  {
+	for i, repattern := range regExEntry.SubexpNames() {
 		if i == 0 || repattern == "" {
 			continue
 		}
@@ -259,23 +259,36 @@ func parseEntry(s string) (*Entry, error) {
 	return &e, nil
 }
 
-
 func main() {
-	input := "世界 世界 [shi4 jie4] /world/CL:個|个[ge4]/\n 你好 你好 [ni3 hao3] /Hello!/Hi!/How are you?/\n"
 
-	r := io.Reader(strings.NewReader(input))
-	
-	cedict_r := NewEntry(r)
+	fileInput, err := os.Open("./input_file_to_parse.txt")
 
-	for {
-		err := cedict_r.IterateEntry()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		if err != nil {
-			break
+	defer fileInput.Close()
+
+	scanner := bufio.NewScanner(fileInput)
+	for scanner.Scan() {
+		r := io.Reader(strings.NewReader(scanner.Text()))
+		cedict_r := NewEntry(r)
+
+		for {
+			err := cedict_r.IterateEntry()
+
+			if err != nil {
+				break
+			}
+
+			currentEntry := cedict_r.Entry()
+			fmt.Println("Dictionary Entry: ", currentEntry.Simplified, currentEntry.PinyinWithTones, currentEntry.Definitions[0])
 		}
 
-		current_entry := cedict_r.Entry()
-		fmt.Println("Dict Entry: ", current_entry.Simplified, current_entry.PinyinWithTones, current_entry.Definitions[0])
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
 	}
 
 }
